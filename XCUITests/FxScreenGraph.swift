@@ -36,6 +36,8 @@ let WebLinkContextMenu = "WebLinkContextMenu"
 let CloseTabMenu = "CloseTabMenu"
 let AddCustomSearchSettings = "AddCustomSearchSettings"
 let NewTabChoiceSettings = "NewTabChoiceSettings"
+let DisablePasscodeSettings = "DisablePasscodeSettings"
+let ChangePasscodeSettings = "ChangePasscodeSettings"
 
 // These are in the exact order they appear in the settings
 // screen. XCUIApplication loses them on small screens.
@@ -121,6 +123,11 @@ class Action {
 
     static let SetPasscode = "SetPasscode"
     static let SetPasscodeTypeOnce = "SetPasscodeTypeOnce"
+    static let DisablePasscode = "DisablePasscode"
+    static let LoginPasscodeTypeOnce = "LoginPasscodeTypeOnce"
+    static let ChangePasscode = "ChangePasscode"
+    static let ChangePasscodeTypeOnce = "ChangePasscodeTypeOnce"
+    static let ConfirmPasscodeToChangePasscode = "ConfirmPasscodeToChangePasscode"
 
     static let TogglePocketInNewTab = "TogglePocketInNewTab"
 
@@ -413,7 +420,9 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
         screenState.backAction = navigationControllerBackAction
         let table = app.tables.element(boundBy: 0)
         screenState.tap(table.cells["TurnOnPasscode"], to: SetPasscodeScreen, if: "passcode == nil")
+        screenState.tap(table.cells["TurnOffPasscode"], to: DisablePasscodeSettings, if: "passcode != nil")
         screenState.tap(table.cells["PasscodeInterval"], to: PasscodeIntervalSettings, if: "passcode != nil")
+        screenState.tap(table.cells["ChangePasscode"], to: ChangePasscodeSettings, if: "passcode != nil")
     }
 
     func typePasscode(_ passCode: String) {
@@ -432,7 +441,18 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
         screenState.gesture(forAction: Action.SetPasscodeTypeOnce) { userState in
             typePasscode(userState.newPasscode)
         }
+        screenState.backAction = navigationControllerBackAction
     }
+
+    map.addScreenState(DisablePasscodeSettings) { screenState in
+        screenState.gesture(forAction: Action.DisablePasscode, transitionTo: PasscodeSettings) { userState in
+            if let passcode = userState.passcode {
+                typePasscode(passcode)
+            }
+        }
+        screenState.backAction = navigationControllerBackAction
+    }
+
 
     map.addScreenState(PasscodeIntervalSettings) { screenState in
         screenState.onEnter { userState in
@@ -443,8 +463,34 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
         screenState.backAction = navigationControllerBackAction
     }
 
+    map.addScreenState(ChangePasscodeSettings) { screenState in
+        screenState.gesture(forAction: Action.ChangePasscode) { userState in
+            if let passcode = userState.passcode {
+                typePasscode(passcode)
+                typePasscode(userState.newPasscode)
+                typePasscode(userState.newPasscode)
+                userState.passcode = userState.newPasscode
+            }
+        }
+        screenState.gesture(forAction: Action.ConfirmPasscodeToChangePasscode) { userState in
+            if let passcode = userState.passcode {
+                typePasscode(passcode)
+            }
+        }
+        screenState.gesture(forAction: Action.ChangePasscodeTypeOnce) { userState in
+            typePasscode(userState.newPasscode)
+        }
+        screenState.backAction = navigationControllerBackAction
+    }
+
     map.addScreenState(LoginsSettings) { screenState in
         screenState.backAction = navigationControllerBackAction
+
+        screenState.gesture(forAction: Action.LoginPasscodeTypeOnce) { userState in
+                if let passcode = userState.passcode {
+                    typePasscode(passcode)
+                }
+        }
     }
 
     map.addScreenState(ClearPrivateDataSettings) { screenState in
