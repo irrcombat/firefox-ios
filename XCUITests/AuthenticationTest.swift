@@ -6,20 +6,20 @@ import XCTest
 
 class AuthenticationTest: BaseTestCase {
 
-    fileprivate func setInterval(interval: String = "Immediately") {
+    fileprivate func setInterval(_ interval: String = "Immediately") {
         navigator.goto(PasscodeIntervalSettings)
-        let authenticationmanagerSettingstableviewTable = app.tables["AuthenticationManager.settingsTableView"]
+        let table = app.tables["AuthenticationManager.settingsTableView"]
         //waitforExistence(app.staticTexts[interval])
         app.staticTexts[interval].tap()
         navigator.goto(PasscodeSettings)
-        waitforExistence(authenticationmanagerSettingstableviewTable.staticTexts[interval])
+        waitforExistence(table.staticTexts[interval])
     }
 
 
     // Sets the passcode and interval (set to immediately)
     func testTurnOnOff() {
         navigator.performAction(Action.SetPasscode)
-        setInterval(interval: "Immediately")
+        setInterval("Immediately")
         XCTAssertTrue(app.staticTexts["Immediately"].exists)
         navigator.nowAt(PasscodeSettings)
         navigator.performAction(Action.DisablePasscode)
@@ -56,7 +56,7 @@ class AuthenticationTest: BaseTestCase {
 
     func testPromptPassCodeUponReentryWithDelay() {
         navigator.performAction(Action.SetPasscode)
-        setInterval(interval: "After 5 minutes")
+        setInterval("After 5 minutes")
         navigator.goto(LoginsSettings)
         waitforExistence(app.navigationBars["Enter Passcode"])
         navigator.performAction(Action.LoginPasscodeTypeOnce)
@@ -158,7 +158,7 @@ class AuthenticationTest: BaseTestCase {
 
     func testEnteringLoginsUsingPasscodeWithFiveMinutesInterval() {
         navigator.performAction(Action.SetPasscode)
-        setInterval(interval: "After 5 minutes")
+        setInterval("After 5 minutes")
 
         // now we've changed the timeout, we should prompt next time for passcode.
         navigator.goto(LoginsSettings)
@@ -188,7 +188,7 @@ class AuthenticationTest: BaseTestCase {
 
     func testWrongPasscodeDisplaysAttemptsAndMaxError() {
         navigator.performAction(Action.SetPasscode)
-        setInterval(interval: "After 5 minutes")
+        setInterval("After 5 minutes")
 
         // Enter wrong passcode
         navigator.goto(LoginsSettings)
@@ -279,15 +279,15 @@ class AuthenticationTest: BaseTestCase {
 
         // Change it to 15 minutes
         navigator.goto(PasscodeSettings)
-        setInterval(interval: "After 15 minutes")
+        setInterval("After 15 minutes")
 
         // Enter login, since the interval is reset, it will ask for password again
         navigator.goto(LoginsSettings)
         waitforExistence(app.navigationBars["Enter Passcode"])
-        if iPad() {
-            app.buttons["Cancel"].tap()
-            navigator.nowAt(SettingsScreen)
-        }
+        //if iPad() {
+         //   app.buttons["Cancel"].tap()
+         //   navigator.nowAt(SettingsScreen)
+        //}
         navigator.goto(PasscodeSettings)
         navigator.performAction(Action.DisablePasscode)
     }
