@@ -38,6 +38,7 @@ let AddCustomSearchSettings = "AddCustomSearchSettings"
 let NewTabChoiceSettings = "NewTabChoiceSettings"
 let DisablePasscodeSettings = "DisablePasscodeSettings"
 let ChangePasscodeSettings = "ChangePasscodeSettings"
+let LockedLoginsSettings = "LockedLoginsSettings"
 
 // These are in the exact order they appear in the settings
 // screen. XCUIApplication loses them on small screens.
@@ -187,6 +188,19 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
             app/*@START_MENU_TOKEN@*/.otherElements["PopoverDismissRegion"]/*[[".otherElements[\"dismiss popup\"]",".otherElements[\"PopoverDismissRegion\"]"],[[[-1,1],[-1,0]]],[0]]@END_MENU_TOKEN@*/.tap()
         } else {
             app.buttons["PhotonMenu.cancel"].tap()
+        }
+    }
+
+    let cancelTypePasscode = {
+
+        if isTablet {
+            if (app.buttons["Cancel"].exists){
+                app.buttons["Cancel"].tap()
+            } else {
+                app.navigationBars.element(boundBy: 0).buttons.element(boundBy: 0).tap()
+            }
+        } else {
+            app.navigationBars.element(boundBy: 0).buttons.element(boundBy: 0).tap()
         }
     }
 
@@ -376,6 +390,7 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
         screenState.tap(table.cells["OpenWith.Setting"], to: OpenWithSettings)
         screenState.tap(table.cells["TouchIDPasscode"], to: PasscodeSettings)
         screenState.tap(table.cells["Logins"], to: LoginsSettings)
+        screenState.tap(table.cells["Logins"], to: LockedLoginsSettings, if: "passcode != nil")
         screenState.tap(table.cells["ClearPrivateData"], to: ClearPrivateDataSettings)
         screenState.tap(table.cells["TrackingProtection"], to: TrackingProtectionSettings)
         screenState.tap(table.cells["ShowTour"], to: ShowTourInSettings)
@@ -464,7 +479,7 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
     }
 
     map.addScreenState(ChangePasscodeSettings) { screenState in
-        screenState.gesture(forAction: Action.ChangePasscode) { userState in
+        screenState.gesture(forAction: Action.ChangePasscode, transitionTo: PasscodeSettings) { userState in
             if let passcode = userState.passcode {
                 typePasscode(passcode)
                 typePasscode(userState.newPasscode)
@@ -491,6 +506,10 @@ func createScreenGraph(for test: XCTestCase, with app: XCUIApplication) -> Scree
                     typePasscode(passcode)
                 }
         }
+    }
+
+    map.addScreenState(LockedLoginsSettings) { screenState in
+        screenState.backAction = cancelTypePasscode
     }
 
     map.addScreenState(ClearPrivateDataSettings) { screenState in
@@ -686,6 +705,13 @@ extension Navigator where T == FxUserState {
             self.goto(TabTray)
             self.goto(HomePanelsScreen)
 
+        }
+    }
+
+    func enterPasscode(_ passCode: String) {
+        let app = XCUIApplication()
+        passCode.forEach { char in
+            app.keys["\(char)"].tap()
         }
     }
 
