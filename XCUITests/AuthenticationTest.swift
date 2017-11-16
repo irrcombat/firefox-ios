@@ -9,14 +9,11 @@ class AuthenticationTest: BaseTestCase {
     fileprivate func setInterval(_ interval: String = "Immediately") {
         navigator.goto(PasscodeIntervalSettings)
         let table = app.tables["AuthenticationManager.settingsTableView"]
-        //waitforExistence(app.staticTexts[interval])
         app.staticTexts[interval].tap()
         navigator.goto(PasscodeSettings)
         waitforExistence(table.staticTexts[interval])
     }
 
-
-    // Sets the passcode and interval (set to immediately)
     func testTurnOnOff() {
         navigator.performAction(Action.SetPasscode)
         setInterval("Immediately")
@@ -38,8 +35,8 @@ class AuthenticationTest: BaseTestCase {
     func testPromptPassCodeUponReentry() {
         navigator.performAction(Action.SetPasscode)
         navigator.goto(SettingsScreen)
-        navigator.goto(LoginsSettings)
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
 
         //send app to background, and re-enter
@@ -57,9 +54,8 @@ class AuthenticationTest: BaseTestCase {
     func testPromptPassCodeUponReentryWithDelay() {
         navigator.performAction(Action.SetPasscode)
         setInterval("After 5 minutes")
-        navigator.goto(LoginsSettings)
-        waitforExistence(app.navigationBars["Enter Passcode"])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
 
         //send app to background, and re-enter
@@ -80,7 +76,6 @@ class AuthenticationTest: BaseTestCase {
         userState.passcode = "222222"
         navigator.performAction(Action.ConfirmPasscodeToChangePasscode)
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 2)."])
-        //userState.passcode = "333333"
         navigator.performAction(Action.ConfirmPasscodeToChangePasscode)
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 1)."])
 
@@ -140,17 +135,15 @@ class AuthenticationTest: BaseTestCase {
         navigator.performAction(Action.SetPasscode)
 
         // Enter login
-        navigator.goto(LoginsSettings)
-        waitforExistence(app.navigationBars["Enter Passcode"])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
-
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
+
         navigator.goto(SettingsScreen)
 
         // Trying again should display passcode screen since we've set the interval to be immediately.
-        navigator.goto(LoginsSettings)
-        waitforExistence(app.navigationBars["Enter Passcode"])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
         navigator.goto(PasscodeSettings)
         navigator.performAction(Action.DisablePasscode)
@@ -161,9 +154,8 @@ class AuthenticationTest: BaseTestCase {
         setInterval("After 5 minutes")
 
         // now we've changed the timeout, we should prompt next time for passcode.
-        navigator.goto(LoginsSettings)
-        waitforExistence(app.navigationBars["Enter Passcode"])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
 
         // Trying again should not display the passcode screen since the interval is 5 minutes
@@ -173,7 +165,6 @@ class AuthenticationTest: BaseTestCase {
 
         navigator.goto(PasscodeSettings)
         waitforExistence(app.staticTexts["After 5 minutes"])
-
         navigator.performAction(Action.DisablePasscode)
     }
 
@@ -191,14 +182,13 @@ class AuthenticationTest: BaseTestCase {
         setInterval("After 5 minutes")
 
         // Enter wrong passcode
-        navigator.goto(LoginsSettings)
+        navigator.goto(LockedLoginsSettings)
         waitforExistence(app.navigationBars["Enter Passcode"])
-        userState.passcode = "222222"
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.enterPasscode ("222222")
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 2)."])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.enterPasscode ("222222")
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 1)."])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.enterPasscode ("222222")
         waitforExistence(app.staticTexts["Maximum attempts reached. Please try again later."])
     }
 
@@ -206,17 +196,13 @@ class AuthenticationTest: BaseTestCase {
          navigator.performAction(Action.SetPasscode)
 
         // Enter wrong passcode on Logins
-        navigator.goto(LoginsSettings)
+        navigator.goto(LockedLoginsSettings)
         waitforExistence(app.navigationBars["Enter Passcode"])
         userState.passcode = "222222"
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.enterPasscode ("222222")
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 2)."])
 
         // Go back to Passcode, and enter a wrong passcode, notice the error count
-        if iPad() {
-            app.buttons["Cancel"].tap()
-            navigator.nowAt(SettingsScreen)
-        }
         navigator.goto(PasscodeSettings)
         navigator.performAction(Action.ConfirmPasscodeToChangePasscode)
 
@@ -260,8 +246,8 @@ class AuthenticationTest: BaseTestCase {
 
         userState.passcode = "222222"
         navigator.performAction(Action.DisablePasscode)
-
         waitforExistence(app.staticTexts["Incorrect passcode. Try again (Attempts remaining: 2)."])
+
         userState.passcode = "111111"
         navigator.nowAt(DisablePasscodeSettings)
         navigator.performAction(Action.DisablePasscode)
@@ -272,9 +258,8 @@ class AuthenticationTest: BaseTestCase {
         navigator.performAction(Action.SetPasscode)
 
         // Enter login, since the default is 'set immediately,' it will ask for passcode
-        navigator.goto(LoginsSettings)
-        waitforExistence(app.navigationBars["Enter Passcode"])
-        navigator.performAction(Action.LoginPasscodeTypeOnce)
+        navigator.goto(LockedLoginsSettings)
+        navigator.enterPasscode("111111")
         waitforExistence(app.tables["Login List"])
 
         // Change it to 15 minutes
@@ -282,13 +267,8 @@ class AuthenticationTest: BaseTestCase {
         setInterval("After 15 minutes")
 
         // Enter login, since the interval is reset, it will ask for password again
-        navigator.goto(LoginsSettings)
+        navigator.goto(LockedLoginsSettings)
         waitforExistence(app.navigationBars["Enter Passcode"])
-        //if iPad() {
-         //   app.buttons["Cancel"].tap()
-         //   navigator.nowAt(SettingsScreen)
-        //}
-        navigator.goto(PasscodeSettings)
         navigator.performAction(Action.DisablePasscode)
     }
 }
